@@ -1,6 +1,6 @@
 services:
-  misis-FriendsM:
-    container_name: misis-FriendsM
+  misis-friendsm:
+    container_name: misis-friendsm
     build: ./
     restart: always
     env_file:
