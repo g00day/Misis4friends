@@ -38,7 +38,7 @@ dp = Dispatcher(storage=MemoryStorage())
 async def start(message: types.Message, state: FSMContext):
     await state.clear() # Making every active state clear
     user = message.from_user
-    con = get_connection("my.db")
+    con = get_connection("db/my.db")
 
     if check_user_existance(con, user.id)[0]:
         utils.check_user_activity_and_set_active(user.id)
@@ -166,7 +166,7 @@ async def set_pics(message: types.Message, state: FSMContext):
     data.pop("is_edit") # Deleting is_edit flag which reports if the profile is gonna be
     #edited or not
 
-    con = get_connection("my.db")
+    con = get_connection("db/my.db")
     register_new_or_edit_user(con, data, on_change=is_edit, user_id=message.from_user.id)
     
 
@@ -179,7 +179,7 @@ async def menu(message: types.Message, state: FSMContext):
     profile_data = utils.display_profile(user_id)
     if profile_data[0]:
 
-        con = get_connection("my.db")
+        con = get_connection("db/my.db")
         matches = get_matches_by_receiver_id(con, receiver_id=user_id)
 
         m_text = profile_data[1]
@@ -249,7 +249,7 @@ async def edit_description(message: types.Message, state: FSMContext):
     validated_description = utils.validate_description(description)
     if validated_description[0]:
         
-        con = get_connection("my.db")
+        con = get_connection("db/my.db")
         u_data = list(check_user_existance(con, user_id)[1])[1:8]
 
         if description == "Очистить":
@@ -275,7 +275,7 @@ async def edit_year(message: types.Message, state: FSMContext):
     validated_year = utils.validate_year(year)
     if validated_year[0]:
 
-        con = get_connection("my.db")
+        con = get_connection("db/my.db")
 
         u_data = list(check_user_existance(con, user_id)[1])[1:8]
         u_data[2] = validated_year[1]
@@ -316,7 +316,7 @@ async def set_make_profile_inactive_action(message, state: FSMContext):
     if validated_action[0]:
         action = validated_action[1]
         if action == "Да-✅":
-            con = get_connection("my.db")
+            con = get_connection("db/my.db")
             activate_and_inactivate_user(con, message.from_user.id, is_active=False)
             delete_all_matches_by_user_id(con, message.from_user.id)
             await bot.send_message(message.from_user.id, "Надеюсь ты нашел кого-то благодаря мне! Рад был с тобой пообщаться, будет скучно – пиши, обязательно найдем тебе кого-нибудь\n\nНапиши мне что-нибудь, чтобы смотреть анкеты.")
@@ -330,7 +330,7 @@ async def set_make_profile_inactive_action(message, state: FSMContext):
 
 @dp.message(MakeProfileActiveState.make_active)
 async def set_make_profile_active_action(message, state: FSMContext):
-    con = get_connection("my.db")
+    con = get_connection("db/my.db")
     activate_and_inactivate_user(con, message.from_user.id, is_active=True)
     con.close()
     await menu(message, state)
@@ -338,7 +338,7 @@ async def set_make_profile_active_action(message, state: FSMContext):
 
 async def see_likes_mail(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
-    con = get_connection("my.db")
+    con = get_connection("db/my.db")
 
     likes = get_matches_by_receiver_id(con, user_id)
     if likes != []:
@@ -377,7 +377,7 @@ async def see_likes_mail(message: types.Message, state: FSMContext):
 @dp.message(LikesMailState.set_reaction)
 async def set_reaction_in_likes_mail(message: types.Message, state: FSMContext):
     rate = message.text
-    con = get_connection("my.db")
+    con = get_connection("db/my.db")
     data = await state.get_data()
 
     match_id = data["match_id"]
@@ -442,7 +442,7 @@ async def search(message: types.Message, state: FSMContext):
 @dp.message(SearchState.set_reaction)
 async def rate_user(message: types.Message, state: FSMContext):
     rate = message.text
-    con = get_connection("my.db")
+    con = get_connection("db/my.db")
     data = await state.get_data()
     user_id = data["user_id"]
     if rate == "💙":
@@ -480,7 +480,7 @@ async def send_personal_message(message: types.Message, state: FSMContext):
     data = {"sender_id": message.from_user.id,
             "receiver_id": user_id}
     
-    con = get_connection("my.db")
+    con = get_connection("db/my.db")
 
     personal_message = message.text
     personal_message = utils.validate_personal_message(personal_message)

@@ -84,7 +84,7 @@ def get_random_user_in_search(user_id):
         ---------------------------------------
         Also it checks if the user which id  
         was given as an argument is not banned  """
-    con = db.get_connection("my.db")
+    con = db.get_connection("db/my.db")
     interested_in = db.check_user_existance(con, user_id)[1][7]
     is_banned = db.check_user_existance(con, user_id)[1][13]
     users = db.get_all_users(con, interested_in)
@@ -104,7 +104,7 @@ def display_profile(user_id):
         FSInputFile: photo  
     """
 
-    con = db.get_connection("my.db")
+    con = db.get_connection("db/my.db")
     user = db.check_user_existance(con, user_id) # stores the data about the user(bool - existance, tuple - data)
     con.close()
     
@@ -130,7 +130,7 @@ def display_profile(user_id):
 def check_user_activity_and_set_active(user_id):
     """ This function checks if the user is not
      active and sets it to active """
-    con = db.get_connection("my.db")
+    con = db.get_connection("db/my.db")
     user = db.check_user_existance(con, user_id)
     u_data = user[1]
 

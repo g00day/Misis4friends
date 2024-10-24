@@ -1,3 +1,5 @@
 media/
 env/
 .env
+
+__pycache__

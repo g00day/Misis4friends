@@ -47,9 +47,6 @@ def create_user_table(con):
     cursor = con.cursor()
     cursor.execute(sql_create_users_table)
 
-con = get_connection("my.db")
-create_user_table(con)
-    
 
 # Функция для регистрации нового пользователя
 # Или изменения существующего
@@ -155,9 +152,6 @@ def edit_user_text_data(con, user_id, data):
     con.commit()
 
 
-#ban_user(con, 362877694)
-
-
 
 
 """ Complaint """
@@ -260,49 +254,4 @@ def needs_prevent_multiple_matches(con, sender_id, receiver_id):
     return False
 
 
-
-match_data = {
-    "sender_id": 1488,
-    "receiver_id": 228,
-    "message": "Hey bro nice dick!"
-}
-
-complaint_data = {
-    "sender_id": 1488,
-    "receiver_id": 228,
-    "reason":"иди нахуй"
-}
-print(get_all_users(con, "M"))
-create_match_table(con)
-#create_match_instance(con, match_data)
-#delete_match_instance(con, 3)
-
-"""
-data = {
-    "user_id":"12345",
-    "name":"Arseniy",
-    'age':"78",
-    'year':"I",
-    'institute':"dsgsdgsdgsdg",
-    'description':"dsgdsgsdgsdg",
-    'gender':"F",
-    'interested_in':"M",
-    'pic_1':"dsfdsfsd",
-    'pic_2':"sdffsdfsd",
-    'pic_3':"sdfsdfsdf",
-    'pic_4':"dsfsdfsdfsdf",
-}
-
-"""
-
-#print(ban_user(con, 362877694))
-print(get_all_matches(con))
-create_compaint_table(con)
-#create_complaint_instance(con, complaint_data)
-#print(get_all_matches(con))
-#print(get_all_complaints(con))
-#print(get_all_users(con))
-#register_new_user(con, data)
-"""
-print(check_user_existance(con, "12345"))"""
 

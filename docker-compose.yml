@@ -1,0 +1,14 @@
+services:
+  misis-excursion:
+    container_name: misis-excursion
+    build: ./
+    restart: always
+    env_file:
+      - path: ./.env
+        required: false
+      - path: ./.env.development.local
+        required: false
+    environment:
+      - PORT=8000
+    volumes:
+      - ./db://usr/src/app/db:rw
