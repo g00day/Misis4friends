@@ -12,3 +12,4 @@ services:
       - PORT=8000
     volumes:
       - ./db:/usr/src/app/db:rw
+      - ./media:/usr/src/app/media:rw
