@@ -1,4 +1,5 @@
 media/
+db/
 env/
 .env
 
