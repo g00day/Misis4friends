@@ -141,7 +141,7 @@ async def set_interested_in(message: types.Message, state: FSMContext):
     validated_interested_in = utils.validate_and_serialize_genders(interested_in)
     if validated_interested_in[0]:
         await state.update_data(interested_in=validated_interested_in[1])
-        await bot.send_message(message.from_user.id, f"*Последнее*, отправь свои фотографии(до 4, включительно), эти фото будут приложены к твоей анкете", reply_markup=ReplyKeyboardRemove(), parse_mode="Markdown")
+        await bot.send_message(message.from_user.id, f"*Последнее*, отправь свою фотографию, это фото будет приложено к твоей анкете", reply_markup=ReplyKeyboardRemove(), parse_mode="Markdown")
         await state.set_state(RegistrationState.set_pics)
     else:
         await bot.send_message(message.from_user.id, validated_interested_in[1], reply_markup=keyboards.get_interested_in_keyboard(), parse_mode="Markdown")
@@ -161,7 +161,7 @@ async def set_pics(message: types.Message, state: FSMContext):
     await bot.download(file, filename)
 
     data = await state.get_data()
-    data.update({"user_id":message.from_user.id, "pic_1":filename, "pic_2": None, "pic_3":None, "pic_4":None})
+    data.update({"user_id":message.from_user.id, "pic_1":filename})
     is_edit = data["is_edit"]
     data.pop("is_edit") # Deleting is_edit flag which reports if the profile is gonna be
     #edited or not
@@ -171,7 +171,7 @@ async def set_pics(message: types.Message, state: FSMContext):
     
 
     await menu(message, state)
-    #await state.clear()
+
 
 
 async def menu(message: types.Message, state: FSMContext):
@@ -218,7 +218,8 @@ async def set_profile_menu_action(message: types.Message, state: FSMContext):
         await bot.send_message(message.from_user.id, "*Отлично*\n\nКак тебя зовут?", reply_markup=keyboards.get_leave_name_keyboard(user=message.from_user), parse_mode="Markdown")
         await state.set_state(ProfileEditState.edit_profile)
     elif action == "3":
-        await bot.send_message(message.from_user.id, "Unavailable")
+        await bot.send_message(message.from_user.id, "Отправь свою фотографию, это фото будет приложено к твоей анкете", reply_markup=keyboards.get_update_profile_picture_keyboard(), parse_mode="Markdown")
+        await state.set_state(ProfileEditState.edit_photo)
     elif action == "4":
         await bot.send_message(message.from_user.id, "*Отлично*\n\nВведи новый текст для твоей анкеты", reply_markup=keyboards.get_edit_description_keyboard(), parse_mode="Markdown")
         await state.set_state(ProfileEditState.edit_description)
@@ -240,6 +241,31 @@ async def edit_profile(message: types.Message, state: FSMContext):
     else:
         await bot.send_message(message.from_user.id, f"{validated_name[1]}", reply_markup=keyboards.get_leave_name_keyboard(user=message.from_user), parse_mode="markdown")
 
+
+@dp.message(ProfileEditState.edit_photo)
+async def edit_photo(message: types.Message, state: FSMContext):
+
+    if message.text == "Пропустить":
+
+        await menu(message, state)
+
+    user_id = message.from_user.id
+
+    photo = message.photo[-1]
+    file_id = photo.file_id
+    
+    # Скачиваем фото
+    file = await bot.get_file(file_id)
+    filename = f"media/photo_1_{user_id}.jpg"
+    await bot.download(file, filename)
+
+    con = get_connection("db/my.db")
+    edit_user_picture(con, user_id, filename)
+    
+
+    await bot.send_message(message.from_user.id, "*Фотография была успешно изменена*", parse_mode="markdown")
+
+    await menu(message, state)
 
 
 @dp.message(ProfileEditState.edit_description)
@@ -319,7 +345,7 @@ async def set_make_profile_inactive_action(message, state: FSMContext):
             con = get_connection("db/my.db")
             activate_and_inactivate_user(con, message.from_user.id, is_active=False)
             delete_all_matches_by_user_id(con, message.from_user.id)
-            await bot.send_message(message.from_user.id, "Надеюсь ты нашел кого-то благодаря мне! Рад был с тобой пообщаться, будет скучно – пиши, обязательно найдем тебе кого-нибудь\n\nНапиши мне что-нибудь, чтобы смотреть анкеты.")
+            await bot.send_message(message.from_user.id, "Надеюсь ты нашел кого-то благодаря мне! Рад был с тобой пообщаться, будет скучно – пиши, обязательно найдем тебе кого-нибудь\n\nНапиши мне что-нибудь, чтобы смотреть анкеты.", reply_markup=ReplyKeyboardRemove())
             con.close()
             await state.set_state(MakeProfileActiveState.make_active)
         elif action == "Нет-⛔️":
@@ -427,7 +453,12 @@ async def search(message: types.Message, state: FSMContext):
     random_user = utils.get_random_user_in_search(user_id)
 
     if random_user[0]:
-        u_data = random_user[1]
+        u_data = list(random_user[1])
+
+        # If the user description is None than we set it to blank string
+        if u_data[5] is None:
+            u_data[5] = ""
+        
         m_text = f'*{u_data[1]}, {u_data[2]}{utils.transorm_gender_to_emoji(u_data[6])}*\n{u_data[4]}, {u_data[3]} 🏫\n\n_{u_data[5]}_\n\n'
         photo = FSInputFile(f'media/photo_1_{u_data[0]}.jpg')
 
@@ -460,6 +491,14 @@ async def rate_user(message: types.Message, state: FSMContext):
         await search(message, state)
     elif rate == "👎":
         await search(message, state)
+    elif rate == "⚠️":
+        msg = """*Выберите одну из следующих причин жалобы:*\n 
+1.🔞 Материал для взрослых.  
+2.💊 Пропаганда наркотиков.  
+3.💰 Продажа товаров и услуг.  
+"""
+        await bot.send_message(message.from_user.id, msg, reply_markup=keyboards.get_complaint_keyboard(), parse_mode="Markdown")
+        await state.set_state(SearchState.set_complaint_reason)
     elif rate == "💤":
         await state.clear()
         await menu(message, state)
@@ -471,6 +510,34 @@ async def rate_user(message: types.Message, state: FSMContext):
         await menu(message, state)
 
 
+@dp.message(SearchState.set_complaint_reason)
+async def complaint(message: types.Message, state: FSMContext):
+    reason = message.text
+
+    data = await state.get_data()
+    user_id = data["user_id"]
+
+    if utils.validate_complaint_reason(reason)[0]:
+
+        if reason == "Отмена ❌":
+
+            await search(message, state)
+
+        else:
+
+            data = {
+                "sender_id": message.from_user.id,
+                "receiver_id": user_id,
+                "reason": reason
+            }
+
+            con = get_connection("db/my.db")
+            create_complaint_instance(con, data)
+
+            await bot.send_message(message.from_user.id, "*Жалоба будет обработана в ближайшее время.*", parse_mode="Markdown")
+    else:
+
+        await bot.send_message(message.from_user.id, "Такой опции нет ❌", parse_mode="Markdown")
 
 @dp.message(SearchState.set_personal_message)
 async def send_personal_message(message: types.Message, state: FSMContext):

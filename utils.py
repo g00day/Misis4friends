@@ -72,6 +72,13 @@ def validate_personal_message(personal_message):
         return True, personal_message
     else:
         return False, f"Сообщение должно быть меньше ❌"
+    
+
+def validate_complaint_reason(reason):
+    if reason not in ["1", "2", "3", "Отмена ❌"]:
+       return False, "Такой опции нет ❌"
+    return True, reason
+
 
 
 # Search mechanics
@@ -85,9 +92,14 @@ def get_random_user_in_search(user_id):
         Also it checks if the user which id  
         was given as an argument is not banned  """
     con = db.get_connection("db/my.db")
-    interested_in = db.check_user_existance(con, user_id)[1][7]
-    is_banned = db.check_user_existance(con, user_id)[1][13]
-    users = db.get_all_users(con, interested_in)
+    user = db.check_user_existance(con, user_id)[1]
+
+    user_id = user[0]
+    gender = user[6]
+    interested_in = user[7]
+    is_banned = user[10]
+
+    users = db.get_all_users(con, user_id, gender, interested_in)
     if users != [] and bool(is_banned) != True:
         random_user = random.choice(users)
         return True, random_user
@@ -134,7 +146,7 @@ def check_user_activity_and_set_active(user_id):
     user = db.check_user_existance(con, user_id)
     u_data = user[1]
 
-    if not(bool(u_data[12])):
+    if not(bool(u_data[9])):
         db.activate_and_inactivate_user(con, user_id=user_id, is_active=True)
 
     con.close()

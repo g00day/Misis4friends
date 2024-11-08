@@ -37,9 +37,6 @@ def create_user_table(con):
         gender TEXT CHECK(gender IN ('M', 'F')) NOT NULL,
         interested_in TEXT CHECK(interested_in IN ('M', 'F')),
         pic_1 TEXT NOT NULL,
-        pic_2 TEXT,
-        pic_3 TEXT,
-        pic_4 TEXT,
         is_active INTEGER DEFAULT 1,
         is_banned INTEGER DEFAULT 0
     );
@@ -55,10 +52,10 @@ def register_new_or_edit_user(conn, data, on_change=False, user_id=None):
     cursor = conn.cursor()
     if not on_change:
         sql = """
-        INSERT INTO users (user_id, name, age, year, institute, description, gender, interested_in, pic_1, pic_2, pic_3, pic_4)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        INSERT INTO users (user_id, name, age, year, institute, description, gender, interested_in, pic_1)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
         """
-        cursor.execute(sql, (data["user_id"], data["name"], data["age"], data["year"], data["institute"], data["description"], data["gender"], data["interested_in"], data["pic_1"], data["pic_2"], data["pic_3"], data["pic_4"]))
+        cursor.execute(sql, (data["user_id"], data["name"], data["age"], data["year"], data["institute"], data["description"], data["gender"], data["interested_in"], data["pic_1"]))
     else:
         sql = """
         UPDATE  users 
@@ -70,13 +67,10 @@ def register_new_or_edit_user(conn, data, on_change=False, user_id=None):
             description=?,
             gender=?,
             interested_in=?,
-            pic_1=?,
-            pic_2=?,
-            pic_3=?,
-            pic_4=?
+            pic_1=?
         WHERE user_id = ?;
         """
-        cursor.execute(sql, (data["name"], data["age"], data["year"], data["institute"], data["description"], data["gender"], data["interested_in"], data["pic_1"], data["pic_2"], data["pic_3"], data["pic_4"], user_id))
+        cursor.execute(sql, (data["name"], data["age"], data["year"], data["institute"], data["description"], data["gender"], data["interested_in"], data["pic_1"], user_id))
 
     
     conn.commit()
@@ -101,13 +95,14 @@ def check_user_existance(con, user_id):
 
 
 
-def get_all_users(con, gender=None):
-    if gender is None:
-        gender = "null"
-    
+def get_all_users(con, user_id=None, gender=None, interested_in=None):
     cursor = con.cursor()
-    sql = f"SELECT * FROM users WHERE gender = ? AND is_active = 1 AND is_banned = 0;"
-    cursor.execute(sql, (gender,))
+    if interested_in is None:
+        sql = "SELECT * FROM users WHERE interested_in IS NULL AND is_active = 1 AND is_banned = 0 AND user_id != ?;"
+        cursor.execute(sql, (user_id,))
+    else:
+        sql = f"SELECT * FROM users WHERE gender = ? AND interested_in = ? AND is_active = 1 AND is_banned = 0 AND user_id != ?;"
+        cursor.execute(sql, (interested_in, gender, user_id))
     users = cursor.fetchall()
     return users
 
@@ -152,6 +147,13 @@ def edit_user_text_data(con, user_id, data):
     con.commit()
 
 
+def edit_user_picture(con, user_id, pic):
+    cursor = con.cursor()
+    sql = f"UPDATE users SET pic_1=? WHERE user_id = ?"
+    cursor.execute(sql, (pic, user_id))
+    con.commit()
+
+
 
 
 """ Complaint """
@@ -186,11 +188,6 @@ def get_all_complaints(con):
     return complaints
 
 
-data = {
-    "sender_id":14566,
-    "receiver_id":19008,
-    "reason":"gay"
-}
 
 
 # Matches
@@ -254,4 +251,11 @@ def needs_prevent_multiple_matches(con, sender_id, receiver_id):
     return False
 
 
+con = get_connection("db/my.db")
 
+create_user_table(con)
+create_match_table(con)
+create_compaint_table(con)
+print(get_all_complaints(con))
+
+con.close()

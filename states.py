@@ -19,6 +19,7 @@ class ProfileMenuState(StatesGroup):
 class ProfileEditState(StatesGroup):
     edit_profile = State()
     edit_description = State()
+    edit_photo = State()
     edit_year = State()
 
 
@@ -33,6 +34,7 @@ class LikesMailState(StatesGroup):
 class SearchState(StatesGroup):
     set_reaction = State()
     set_personal_message = State()
+    set_complaint_reason = State()
 
     
 class MakeProfileInactiveState(StatesGroup):

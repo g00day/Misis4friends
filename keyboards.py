@@ -246,6 +246,7 @@ def get_search_keyboard():
             types.KeyboardButton(text="💙"),
             types.KeyboardButton(text="📩"),
             types.KeyboardButton(text="👎"),
+            types.KeyboardButton(text="⚠️"),
             types.KeyboardButton(text="💤"),
         ]
     ]
@@ -256,6 +257,41 @@ def get_search_keyboard():
     )
 
     return search_keyboard
+
+
+def get_update_profile_picture_keyboard():
+    # 'uup' means update profile picture
+    upp_fields = [
+        [types.KeyboardButton(text="Пропустить")]
+    ]
+
+    upp_keyboard = types.ReplyKeyboardMarkup(
+        keyboard=upp_fields,
+        resize_keyboard=True,
+    )
+
+    return upp_keyboard
+
+
+def get_complaint_keyboard():
+    complaint_fields = [
+        [
+            types.KeyboardButton(text="1"),
+            types.KeyboardButton(text="2"),
+            types.KeyboardButton(text="3"),
+        ],
+        [
+            types.KeyboardButton(text="Отмена ❌"),
+        ]
+    ]
+    
+    pm_keyboard = types.ReplyKeyboardMarkup(
+        keyboard=complaint_fields,
+        resize_keyboard=True,
+        input_field_placeholder="Причина жалобы"
+    )
+    
+    return pm_keyboard
 
 
 def personal_message_keyboard():
