@@ -107,6 +107,17 @@ def get_random_user_in_search(user_id):
         return False, []
 
 
+def get_random_complaint():
+    con = db.get_connection("db/my.db")
+    
+    complaints = db.get_all_complaints(con)
+    if complaints != []:
+        complaint = random.choice(complaints)
+        u_id = complaint[2]
+        return True, db.check_user_existance(con, u_id)[1], complaint
+    else: 
+        return False, []
+
 
 # Profile
 def display_profile(user_id):

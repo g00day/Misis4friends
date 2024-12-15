@@ -38,7 +38,8 @@ def create_user_table(con):
         interested_in TEXT CHECK(interested_in IN ('M', 'F')),
         pic_1 TEXT NOT NULL,
         is_active INTEGER DEFAULT 1,
-        is_banned INTEGER DEFAULT 0
+        is_banned INTEGER DEFAULT 0,
+        is_admin INTEGER NULL DEFAULT 0
     );
     """
     cursor = con.cursor()
@@ -107,6 +108,12 @@ def get_all_users(con, user_id=None, gender=None, interested_in=None):
     return users
 
 
+def get_users_quantity(con):
+    cursor = con.cursor()
+    sql = "SELECT * FROM users;"
+    cursor.execute(sql)
+    return len(cursor.fetchall())
+
 def activate_and_inactivate_user(con, user_id, is_active):
     is_active = int(is_active)
     cursor = con.cursor()
@@ -117,6 +124,20 @@ def activate_and_inactivate_user(con, user_id, is_active):
 def ban_user(con, user_id):
     cursor = con.cursor()
     sql = f"UPDATE users SET is_banned = 1 WHERE user_id = ?"
+    cursor.execute(sql, (user_id,))
+    con.commit()
+
+def add_is_admin_column(con):
+    sql_add_admin_column = """
+    ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0;
+    """
+    cursor = con.cursor()
+    cursor.execute(sql_add_admin_column)
+    con.commit()  
+
+def make_user_admin(con, user_id):
+    cursor = con.cursor()
+    sql = f"UPDATE users SET is_admin = 1 WHERE user_id = ?"
     cursor.execute(sql, (user_id,))
     con.commit()
 
@@ -187,6 +208,12 @@ def get_all_complaints(con):
     complaints = cursor.fetchall()
     return complaints
 
+def delete_complaint_instance(con, id):
+    sql = "DELETE FROM complaints WHERE id = ?;"
+    cursor = con.cursor()
+    cursor.execute(sql, (id,))
+    con.commit()
+
 
 
 
@@ -256,6 +283,7 @@ con = get_connection("db/my.db")
 create_user_table(con)
 create_match_table(con)
 create_compaint_table(con)
-print(get_all_complaints(con))
+make_user_admin(con, 776160081)
+make_user_admin(con, 362877694)
 
 con.close()

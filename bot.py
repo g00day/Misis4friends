@@ -1,5 +1,5 @@
 import logging
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, Router, types
 from aiogram.types import ReplyKeyboardRemove, FSInputFile
 from aiogram.types.update import Update
 
@@ -30,6 +30,7 @@ logging.basicConfig(level=logging.INFO)
 storage = MemoryStorage()
 bot = Bot(os.getenv('TOKEN'))
 dp = Dispatcher(storage=MemoryStorage())
+router = Router()
 
 
 
@@ -40,9 +41,13 @@ async def start(message: types.Message, state: FSMContext):
     user = message.from_user
     con = get_connection("db/my.db")
 
-    if check_user_existance(con, user.id)[0]:
+    u_data = check_user_existance(con, user.id)
+    print(u_data)
+
+    if u_data[0]:
+        if u_data[1][11]:
+            await bot.send_message(message.from_user.id, "Вы являетесь администратором", reply_markup=keyboards.get_admin_keyboard())
         utils.check_user_activity_and_set_active(user.id)
-        #m_text = check_user_existance(con, user.id)[0]
         await menu(message, state)
     else:
         m_text = f"Привет, {user.first_name} 👋\n\nДобро пожаловать в наше студенческое сообщество! Здесь ты можешь найти единомышленников, завести новые знакомства и поделиться своими увлечениями.🥰\n\nКак тебя зовут?"
@@ -570,6 +575,83 @@ async def send_personal_message(message: types.Message, state: FSMContext):
     else:
 
         await bot.send_message(message.from_user.id, f"*{personal_message[1]}*", parse_mode="Markdown")
+
+
+
+@dp.message(AdminState.set_action)
+async def set_admin_action(message: types.Message, state: FSMContext):
+    m_text = message.text
+
+    if m_text == "Выйти 🚪":
+        await menu(message, state)
+    elif m_text == "Узнать количество пользователей 👥":
+        await see_users_quantity(message, state)
+    elif m_text == "Смотреть жалобы ⚠":
+        await view_complaints(message, state)
+    else:
+        await bot.send_message(message.from_user.id, "Такой опции нет ❌", parse_mode="Markdown")
+
+
+async def see_users_quantity(message: types.Message, state: FSMContext):
+    con = get_connection("db/my.db")
+    quantity = get_users_quantity(con)
+    await bot.send_message(message.from_user.id, f"Актуальное число зарегистрированных пользователей👥: *{str(quantity)}*", parse_mode="Markdown")
+    await state.set_state(AdminState.set_action)
+
+
+async def view_complaints(message: types.Message, state: FSMContext):
+    complaint = utils.get_random_complaint()
+    if complaint[0]:
+
+        reasons = ["🔞 Материал для взрослых.", "💊 Пропаганда наркотиков", "💰 Продажа товаров и услуг. "]
+        reason = int(complaint[2][3]) - 1
+
+        u_data = complaint[1]
+
+        m_text = f"Жалоба на пользователя:\n\n*Причина: * _{reasons[reason]}_\n\n*{u_data[1]}, {u_data[2]}{utils.transorm_gender_to_emoji(u_data[6])}*\n{u_data[4]}, {u_data[3]} 🏫\n\n_{u_data[5]}_\n\n"
+        
+        photo = FSInputFile(f'media/photo_1_{u_data[0]}.jpg')
+
+        await message.answer_photo(photo=photo, caption=m_text, parse_mode="Markdown", reply_markup=keyboards.get_complaint_processing_keyboard())
+        await state.set_state(ComplaintProcessingState.set_action)
+        await state.update_data(user_id=u_data[0])
+        await state.update_data(complaint_id=complaint[2][0])
+
+    else:
+        await bot.send_message(message.from_user.id, "*На данный момент жалоб на пользователей нет👍*", parse_mode="Markdown")
+
+
+@dp.message(ComplaintProcessingState.set_action)
+async def complaint_processing(message: types.Message, state: FSMContext):
+    m_text = message.text
+    
+    data = await state.get_data()
+    user_id = data["user_id"]
+    complaint_id = data["complaint_id"]
+
+    con = get_connection("db/my.db")
+
+    if m_text == "Бан":
+        ban_user(con, user_id)
+        await bot.send_message(message.from_user.id, f"*Пользователь забанен✅*", parse_mode="Markdown")
+    elif m_text == "Оправдать":
+        delete_complaint_instance(con, complaint_id)
+        await view_complaints(message, state)
+    elif m_text == "💤":
+        await bot.send_message(message.from_user.id, f"Добро пожаловать, *{message.from_user.first_name}*", reply_markup=keyboards.get_admin_action_keyboard(), parse_mode="Markdown")
+        await state.set_state(AdminState.set_action)
+    else:
+        await bot.send_message(message.from_user.id, "*Такой опции нет❌*", parse_mode="Markdown")
+
+
+""" Admin panel """
+@dp.callback_query(lambda c: c.data == 'admin')
+async def process_admin_button(callback_query: types.CallbackQuery, state: FSMContext):
+    state.clear()
+    await bot.answer_callback_query(callback_query.id)
+    await bot.send_message(callback_query.from_user.id, f"Добро пожаловать, *{callback_query.from_user.first_name}*", reply_markup=keyboards.get_admin_action_keyboard(), parse_mode="Markdown")
+    await state.set_state(AdminState.set_action)
+
 
 
 # Запуск процесса поллинга новых апдейтов

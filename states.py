@@ -42,3 +42,10 @@ class MakeProfileInactiveState(StatesGroup):
 
 class MakeProfileActiveState(StatesGroup):
     make_active = State()
+
+
+class AdminState(StatesGroup):
+    set_action = State()
+
+class ComplaintProcessingState(StatesGroup):
+    set_action = State()

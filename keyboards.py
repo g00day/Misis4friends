@@ -1,6 +1,15 @@
 from aiogram import types
 
 
+# Inline keyboards
+def get_admin_keyboard():
+    inline_admin_list = [
+        [types.InlineKeyboardButton(text="Админ панель", callback_data='admin')]
+    ]
+    return types.InlineKeyboardMarkup(inline_keyboard=inline_admin_list)
+
+
+
 def get_menu_keyboard():
     menu_fields = [
         [
@@ -309,3 +318,38 @@ def personal_message_keyboard():
 
     return pm_keyboard
 
+
+def get_admin_action_keyboard():
+    ac_fields = [
+        [
+            types.KeyboardButton(text="Смотреть жалобы ⚠"),
+            types.KeyboardButton(text="Количество пользователей 👥"),
+            types.KeyboardButton(text="Выйти 🚪")
+        ],
+    ]
+
+    ac_keyboard = types.ReplyKeyboardMarkup(
+        keyboard=ac_fields,
+        resize_keyboard=True,
+        input_field_placeholder="Админ панель"
+    )
+
+    return ac_keyboard
+
+
+def get_complaint_processing_keyboard():
+    cp_fields = [
+        [
+            types.KeyboardButton(text="Бан"),
+            types.KeyboardButton(text="Оправдать"),
+            types.KeyboardButton(text="💤")
+        ],
+    ]
+
+    cp_keyboard = types.ReplyKeyboardMarkup(
+        keyboard=cp_fields,
+        resize_keyboard=True,
+        input_field_placeholder="Админ панель"
+    )
+
+    return cp_keyboard
